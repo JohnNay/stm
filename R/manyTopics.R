@@ -15,7 +15,7 @@ paretosingle <- function(z) {
       stop("manyTopics function not yet designed for models with content variable.") 
     }
   }
- 
+  
   d1max <- max(m[,1])
   d2max <- max(m[,2])
   weakcandidates <- m[,1]==d1max | m[,2]==d2max
@@ -41,25 +41,37 @@ manyTopics <- function(documents, vocab, K, prevalence, content,
                        init.type = "LDA", 
                        emtol = 1e-05, seed = NULL, runs = 50, 
                        frexw = 0.7, net.max.em.its = 2, 
-                       netverbose = FALSE, M = 10,...) {
-  out<-list()
-  semcoh<-exclusivity<-list()
-  for(i in 1:length(K)) {
-    
-    models<- selectModel(documents, vocab, K[i], prevalence, content, data = data, 
+                       netverbose = FALSE, M = 10,
+                       parallel = FALSE,
+                       cores = NULL,
+                       ...) {
+  if(parallel) {
+    forloop <- foreach::`%dopar%`
+    if (missing(cores)) cores <- parallel::detectCores() - 1
+    doParallel::registerDoParallel(cores = cores)
+  } else {
+    forloop <- foreach::`%do%`
+  }
+  
+  o <- forloop(foreach::foreach(i=seq(length(K))), {
+    out <- semcoh <- exclusivity <- list()
+    models<- selectModel(documents, vocab, K[i], prevalence, data = data, 
                          max.em.its = max.em.its, verbose = verbose, init.type = init.type, emtol = emtol, seed = seed, runs = runs, 
                          frexw = frexw, net.max.em.its = net.max.em.its, netverbose = netverbose, M = M, 
                          ...)
     j<-paretosingle(models)
-
-    out[[i]]<-models$runout[[j]]
-    exclusivity[[i]]<-models$exclusivity[[j]]
-    semcoh[[i]]<-models$semcoh[[j]]
+    
+    out <- models$runout[[j]]
+    exclusivity <- models$exclusivity[[j]]
+    semcoh <- models$semcoh[[j]]
     j<-NULL
-  }
+  })
   
-  toreturn<-list(out=out,exclusivity=exclusivity,semcoh=semcoh)
-  return(toreturn)
+  out <- lapply(o, function(x) x$out)
+  exclusivity <- lapply(o, function(x) x$exclusivity)
+  semcoh <- lapply(o, function(x) x$semcoh)
+  
+  list(out=out,exclusivity=exclusivity,semcoh=semcoh)
 }
 
 

@@ -15,4 +15,10 @@ Description: The Structural Topic Model (STM) allows researchers
   The package also includes tools for model selection, visualization,
   and estimation of topic-covariate regressions.
 License: MIT + file LICENSE
+<<<<<<< HEAD
 URL: http://structuraltopicmodel.com 
+||||||| merged common ancestors
+URL: http://structuraltopicmodel.com
+=======
+URL: http://structuraltopicmodel.com
+>>>>>>> Added foreach package to the imports field.

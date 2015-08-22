@@ -7,28 +7,35 @@ searchK <- function(documents, vocab, K, init.type = "Spectral",
                     ...) {
   if(parallel) {
     forloop <- foreach::`%dopar%`
+    # Save one core for watching Netflix:
     if (missing(cores)) cores <- parallel::detectCores() - 1
     doParallel::registerDoParallel(cores = cores)
   } else {
     forloop <- foreach::`%do%`
   }
   
-  #Make a heldout dataset
+  # Make a heldout dataset:
   heldout <- make.heldout(documents,vocab, N=N, proportion=proportion, 
                           seed=heldout.seed)
   
-  #Loop over each of the number of topics
+  # Loop over each of the number of topics and estimate a model for each:
   o <- forloop(foreach::foreach(i=seq(length(K))), {
     #Set up the object to return
     g <- as.list(rep(NA, 8))
     names(g) <- c("K","heldout","residual","bound","lbound","exclus","semcoh","em.its")
     
     g$K <- K[i]
-    #run stm
+
     model <- stm(documents=heldout$documents,vocab=heldout$vocab,
                  K=K[i], init.type=init.type,...)
-    #calculate values to return
-    g$exclus <-mean(unlist(exclusivity(model, M=M, frexw=.7)))
+    
+    # Calculate values to return:
+    if(length(model$beta$logbeta)!=1){
+      warning("Exclusivity calculation only designed for models without content covariates, so skipping it.")
+      g$exclus <- NA
+    } else {
+      g$exclus <- mean(unlist(exclusivity(model, M=M, frexw=.7)))
+    }
     g$semcoh <-mean(unlist(semanticCoherence(model, heldout$documents, M)))
     g$heldout <-eval.heldout(model, heldout$missing)$expected.heldout    
     g$residual <-checkResiduals(model,heldout$documents)$dispersion

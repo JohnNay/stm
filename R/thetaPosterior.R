@@ -75,8 +75,8 @@ thetapost.local <- function(model, documents, nsims) {
       # if it failed we try tightening by taking a BFGS step
       optim.out <- optim(par=eta, fn=lhoodcpp, gr=gradcpp,
                          method="BFGS", control=list(maxit=500),
-                         doc.ct=doc.ct, mu=mu[,i],
-                         siginv=siginv, beta=doc.beta, Ndoc=sum(doc.ct))
+                         doc_ct=doc.ct, mu=mu[,i],
+                         siginv=siginv, beta=doc.beta) #Ndoc=sum(doc.ct) not used by cpp func
       eta <- optim.out$par
       theta <- softmax(c(eta,0))
       hess <- ln.hess(eta, theta, doc.beta, doc.ct, siginv) 

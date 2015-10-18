@@ -146,7 +146,7 @@ newton <- function(eta, doc.ct, mu, siginv, beta,
 
 
 ln.hess <- function(eta, theta, beta,doc.ct, siginv) {
-  expeta <- exp(eta)
+  expeta <- c(exp(eta),1)
   EB <- expeta*beta #calculate exp(eta)\beta for each word
   EB <- t(EB)/colSums(EB) #transpose and norm by (now) the row
   phi <- EB*(doc.ct) #multiply through by word count
